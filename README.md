@@ -5,7 +5,7 @@ sync: none
 sla: none
 ---
 
-# Epistemic Stack
+# Provegate
 
 Three MCP servers that give AI coding agents **justified, revisable beliefs** about your codebase.
 

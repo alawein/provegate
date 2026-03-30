@@ -5,7 +5,7 @@ sync: none
 sla: none
 ---
 
-# Epistemic Stack — Master Prompt
+# Provegate — Master Prompt
 
 ## What This Is
 

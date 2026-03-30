@@ -1,8 +1,8 @@
 ---
-type: canonical
-source: none
-sync: none
-sla: none
+type: derived
+source: ../CLAUDE.md
+sync: manual
+sla: manual
 ---
 
 # Project: ExampleApp
