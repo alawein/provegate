@@ -27,7 +27,14 @@ type: canonical
 | claude-memory-mesh | SQLite via `_db()` | `~/.claude/memory-mesh.db` (override: `MEMORY_MESH_DB` env var) |
 ---
 
-# CLAUDE.md
+# CLAUDE.md — Provegate
+
+## Repository Context
+
+**Name:** Provegate
+**Type:** research-library
+**Purpose:** Three composable MCP servers (FastMCP) that give AI coding agents justified,
+revisable beliefs about a codebase: drift detection, memory mesh, and proof chains.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

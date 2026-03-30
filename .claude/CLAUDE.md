@@ -12,7 +12,7 @@ last-verified: 2026-03-26
 
 ## Project Context
 
-epistemic-stack — Claude Code configuration
+Provegate — Three composable MCP servers (FastMCP) that give AI coding agents justified, revisable beliefs about a codebase: drift detection, memory mesh, and proof chains.
 
 ## Quick Links
 
