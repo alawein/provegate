@@ -22,7 +22,7 @@ Requires **Node 18+** (built-in `fetch`). From repo root, with a token that can 
 
 ```bash
 export GH_TOKEN="ghp_..."   # or fine-grained PAT with Contents: Read
-export GITHUB_REPOSITORY="alawein/epistemic-stack"   # optional; defaults to alawein/epistemic-stack
+export GITHUB_REPOSITORY="alawein/provegate"   # optional; defaults to alawein/provegate
 node scripts/github-sync-report.mjs
 ```
 

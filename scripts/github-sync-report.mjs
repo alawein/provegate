@@ -4,7 +4,7 @@
  * Why: deterministic, no extra deps; works locally with GH_TOKEN/PAT or in CI via GITHUB_TOKEN.
  *
  * Usage:
- *   GITHUB_REPOSITORY=alawein/epistemic-stack node scripts/github-sync-report.mjs
+ *   GITHUB_REPOSITORY=alawein/provegate node scripts/github-sync-report.mjs
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -43,7 +43,7 @@ async function main() {
   const repository =
     process.env.GITHUB_REPOSITORY ||
     process.env.GH_REPO ||
-    "alawein/epistemic-stack";
+    "alawein/provegate";
 
   if (!token) {
     console.error(
