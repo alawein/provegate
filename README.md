@@ -154,3 +154,8 @@ ruff check .
 ## License
 
 MIT
+
+## Ownership
+
+- **Maintainer:** @alawein
+- **Support:** GitHub Issues on this repository
