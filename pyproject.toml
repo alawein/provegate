@@ -15,6 +15,13 @@ scan-drift = "scripts.scan_repo:main"
 [tool.ruff]
 line-length = 120
 
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["shared"]
+
 [tool.ruff.lint]
 # Ignore compact style choices (deliberate in this codebase)
 ignore = ["E401", "E701", "E702", "E722"]
