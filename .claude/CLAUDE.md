@@ -8,7 +8,7 @@ audience: [agents, contributors]
 last-verified: 2026-03-26
 ---
 
-# epistemic-stack — Claude Code Configuration
+# provegate — Claude Code Configuration
 
 ## Project Context
 
