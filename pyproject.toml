@@ -7,7 +7,7 @@ dependencies = ["fastmcp>=2.0.0"]
 license = {text = "MIT"}
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.4.0"]
+dev = ["pytest>=8.0", "ruff>=0.15.10"]
 
 [project.scripts]
 scan-drift = "scripts.scan_repo:main"
