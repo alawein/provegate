@@ -36,5 +36,8 @@ jobs:
       - name: Lint
         run: ruff check .
 
+      - name: Typecheck
+        run: mypy claude-drift/server.py claude-memory-mesh/server.py claude-proof/server.py shared/
+
       - name: Test
         run: pytest --tb=short -q
