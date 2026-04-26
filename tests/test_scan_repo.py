@@ -34,14 +34,10 @@ class TestScanLocalRepo:
     def test_clean_project_exits_zero(self, tmp_path, capsys):
         # Project with intents but no violations
         (tmp_path / "CLAUDE.md").write_text(
-            "<!-- drift:intent -->\n"
-            "- Auth module should not import from billing\n"
-            "<!-- /drift:intent -->\n"
+            "<!-- drift:intent -->\n- Auth module should not import from billing\n<!-- /drift:intent -->\n"
         )
         (tmp_path / "src" / "auth").mkdir(parents=True)
-        (tmp_path / "src" / "auth" / "handler.ts").write_text(
-            'import { Logger } from "../utils/logger";\n'
-        )
+        (tmp_path / "src" / "auth" / "handler.ts").write_text('import { Logger } from "../utils/logger";\n')
         with patch("sys.argv", ["scan_repo.py", str(tmp_path)]):
             main()  # should not raise SystemExit(1)
 

@@ -14,6 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from importlib.util import spec_from_file_location, module_from_spec
 
+
 def _load_drift():
     path = Path(__file__).resolve().parent.parent / "claude-drift" / "server.py"
     spec = spec_from_file_location("drift", str(path))
@@ -36,8 +37,7 @@ def main():
         tmpdir = tempfile.mkdtemp(prefix="drift-scan-")
         cleanup = True
         print(f"Cloning {args.target}...")
-        r = subprocess.run(["git", "clone", "--depth=1", args.target, tmpdir],
-                           capture_output=True, text=True)
+        r = subprocess.run(["git", "clone", "--depth=1", args.target, tmpdir], capture_output=True, text=True)
         if r.returncode != 0:
             print(f"Clone failed: {r.stderr}", file=sys.stderr)
             sys.exit(1)
@@ -62,9 +62,9 @@ def main():
         return
 
     # Human-readable report
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  Drift Report")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Intents found:    {intents['intents_found']}")
     print(f"  Actionable rules: {intents['actionable']}")
     print(f"  Unstructured:     {intents['needs_confirmation']}")
@@ -73,7 +73,7 @@ def main():
     print(f"  Violations:       {result['violation_count']}")
     if result.get("by_severity"):
         print(f"  By severity:      {result['by_severity']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if not result["violations"]:
         print("\n  No violations found.\n")

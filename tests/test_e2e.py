@@ -7,12 +7,21 @@ from uuid import uuid4
 import claude_memory_mesh_server as mms
 from claude_drift_server import scan_intents, check_drift, will_this_drift, _intents
 from claude_memory_mesh_server import (
-    store_claim, record_decision, invalidate_for_file,
-    add_relationship, run_decay, query_claims, _db,
+    store_claim,
+    record_decision,
+    invalidate_for_file,
+    add_relationship,
+    run_decay,
+    query_claims,
+    _db,
 )
 from claude_proof_server import (
-    begin_modification, verify_step, finalize_proof, promote_claims,
-    _proofs, _cp_count,
+    begin_modification,
+    verify_step,
+    finalize_proof,
+    promote_claims,
+    _proofs,
+    _cp_count,
 )
 
 
@@ -22,6 +31,7 @@ def _clear_proof():
 
 
 # ── Full Lifecycle ────────────────────────────────────────────────────────
+
 
 class TestFullLifecycle:
     def test_drift_to_proof_to_memory(self, tmp_project, memory_db):
@@ -44,8 +54,13 @@ class TestFullLifecycle:
             # 3. Verify the fix
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0, stdout="OK", stderr="")
-                verify_step(r["proof_id"], "Auth tests pass after removing import",
-                            "test", "All green", test_command="pytest tests/auth")
+                verify_step(
+                    r["proof_id"],
+                    "Auth tests pass after removing import",
+                    "test",
+                    "All green",
+                    test_command="pytest tests/auth",
+                )
 
             # 4. Finalize and get promotable claims
             result = finalize_proof(r["proof_id"])
@@ -53,8 +68,7 @@ class TestFullLifecycle:
             assert len(result["promotable_claims"]) == 1
 
             # 5. Promote claims into memory mesh
-            promoted = promote_claims(result["promotable_claims"],
-                                       scope_files=["src/auth/handler.ts"])
+            promoted = promote_claims(result["promotable_claims"], scope_files=["src/auth/handler.ts"])
             assert promoted["promoted"] == 1
 
             # 6. Verify claim is queryable in memory
@@ -73,7 +87,8 @@ class TestFullLifecycle:
                 "VALUES (?,?,'observation',0.5,'verified',?)",
                 (claim_id, "Old observation about auth", old_ts),
             )
-            conn.commit(); conn.close()
+            conn.commit()
+            conn.close()
 
             # Before decay: claim is queryable
             found = query_claims(query="Old observation")
@@ -91,19 +106,29 @@ class TestFullLifecycle:
         """Store claims for file -> invalidate -> store new claims."""
         with patch.object(mms, "DB_PATH", memory_db):
             # Store an observation for a file
-            store_claim("Auth uses sessions", claim_type="observation",
-                        confidence=0.5, scope_files=["src/auth.ts"],
-                        evidence_kind="human_assertion", evidence_description="checked",
-                        force=True)
+            store_claim(
+                "Auth uses sessions",
+                claim_type="observation",
+                confidence=0.5,
+                scope_files=["src/auth.ts"],
+                evidence_kind="human_assertion",
+                evidence_description="checked",
+                force=True,
+            )
 
             # File changed — invalidate
             result = invalidate_for_file("src/auth.ts")
             assert result["expired"] >= 1
 
             # Store a new claim for the updated file
-            store_claim("Auth now uses JWT", claim_type="invariant",
-                        confidence=0.8, scope_files=["src/auth.ts"],
-                        evidence_kind="test_result", evidence_description="test passed")
+            store_claim(
+                "Auth now uses JWT",
+                claim_type="invariant",
+                confidence=0.8,
+                scope_files=["src/auth.ts"],
+                evidence_kind="test_result",
+                evidence_description="test passed",
+            )
 
             # Query: only the new claim is active
             found = query_claims(scope_file="src/auth.ts")
@@ -113,16 +138,25 @@ class TestFullLifecycle:
 
 # ── Cross-Server Integration ─────────────────────────────────────────────
 
+
 class TestCrossServerIntegration:
     def test_contradiction_detection(self, memory_db):
         """Store contradicting claims -> relationship marks both contested."""
         with patch.object(mms, "DB_PATH", memory_db):
-            r1 = store_claim("Auth uses sessions", claim_type="invariant",
-                             confidence=0.8, evidence_kind="test_result",
-                             evidence_description="session test passed")
-            r2 = store_claim("Auth uses JWT", claim_type="invariant",
-                             confidence=0.8, evidence_kind="test_result",
-                             evidence_description="jwt test passed")
+            r1 = store_claim(
+                "Auth uses sessions",
+                claim_type="invariant",
+                confidence=0.8,
+                evidence_kind="test_result",
+                evidence_description="session test passed",
+            )
+            r2 = store_claim(
+                "Auth uses JWT",
+                claim_type="invariant",
+                confidence=0.8,
+                evidence_kind="test_result",
+                evidence_description="jwt test passed",
+            )
 
             add_relationship(r1["claim_id"], r2["claim_id"], "contradicts")
 
@@ -152,15 +186,19 @@ class TestCrossServerIntegration:
     def test_decision_survives_invalidation(self, memory_db):
         """Decision + observation for same file -> invalidate -> decision preserved."""
         with patch.object(mms, "DB_PATH", memory_db):
-            record_decision("Use JWT for auth", "Security requirements",
-                           scope_files=["src/auth.ts"])
-            store_claim("Auth handler has 3 methods", claim_type="observation",
-                        confidence=0.5, scope_files=["src/auth.ts"],
-                        evidence_kind="human_assertion", evidence_description="counted",
-                        force=True)
+            record_decision("Use JWT for auth", "Security requirements", scope_files=["src/auth.ts"])
+            store_claim(
+                "Auth handler has 3 methods",
+                claim_type="observation",
+                confidence=0.5,
+                scope_files=["src/auth.ts"],
+                evidence_kind="human_assertion",
+                evidence_description="counted",
+                force=True,
+            )
 
             result = invalidate_for_file("src/auth.ts")
-            assert result["expired"] >= 1    # observation expired
+            assert result["expired"] >= 1  # observation expired
             assert result["preserved"] >= 1  # decision preserved
 
             # Decision is still queryable
@@ -170,6 +208,7 @@ class TestCrossServerIntegration:
 
 
 # ── Multi-Intent Composition ─────────────────────────────────────────────
+
 
 class TestMultiIntentComposition:
     def test_multiple_rule_types_compose(self, tmp_project):
@@ -203,7 +242,7 @@ class TestMultiIntentComposition:
         # so proposed_change must contain that phrase for will_this_drift to warn
         result2 = will_this_drift(
             "src/api/controller.ts",
-            'use console.log to debug',
+            "use console.log to debug",
             str(tmp_project),
         )
         assert not result2["safe"]

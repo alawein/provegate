@@ -4,17 +4,30 @@ import json
 from unittest.mock import patch, MagicMock
 
 from claude_drift_server import (
-    _extract_intents_md, _extract_intents_json, _derive_rule,
-    _check_import_boundary, _check_prohibition, _check_layer_enforcement,
-    _find_intent_files, _drift_score, _intents, _extract_import,
-    _rel_posix, _source_files,
-    scan_intents, check_drift, check_drift_for_changes, will_this_drift,
-    declare_intent, export_rules,
+    _extract_intents_md,
+    _extract_intents_json,
+    _derive_rule,
+    _check_import_boundary,
+    _check_prohibition,
+    _check_layer_enforcement,
+    _find_intent_files,
+    _drift_score,
+    _intents,
+    _extract_import,
+    _rel_posix,
+    _source_files,
+    scan_intents,
+    check_drift,
+    check_drift_for_changes,
+    will_this_drift,
+    declare_intent,
+    export_rules,
 )
 from shared.types import ArchitecturalIntent, DriftViolation, Severity
 
 
 # ── Intent Parsing ──────────────────────────────────────────────────────────
+
 
 class TestIntentParsing:
     def test_extract_from_drift_block(self, tmp_project):
@@ -38,9 +51,7 @@ class TestIntentParsing:
     def test_finds_adr_directory(self, tmp_project):
         adr_dir = tmp_project / "docs" / "adr"
         adr_dir.mkdir(parents=True)
-        (adr_dir / "001-use-jwt.md").write_text(
-            "# ADR 001\n\n- All auth tokens must use JWT format\n"
-        )
+        (adr_dir / "001-use-jwt.md").write_text("# ADR 001\n\n- All auth tokens must use JWT format\n")
         files = _find_intent_files(str(tmp_project))
         assert any("001-use-jwt.md" in str(f) for f in files)
 
@@ -61,9 +72,7 @@ class TestRuleDerivation:
         assert "src/production" in i.rule_config["scope"]
 
     def test_layer_enforcement(self):
-        i = ArchitecturalIntent(
-            description="All database access must go through the repository layer"
-        )
+        i = ArchitecturalIntent(description="All database access must go through the repository layer")
         _derive_rule(i)
         assert i.rule_type == "layer_enforcement"
         assert "database access" in i.rule_config["consumer"]
@@ -77,6 +86,7 @@ class TestRuleDerivation:
 
 
 # ── Analyzers ───────────────────────────────────────────────────────────────
+
 
 class TestImportBoundary:
     def test_detects_violation(self, tmp_project):
@@ -147,6 +157,7 @@ class TestLayerEnforcement:
 
 # ── Drift Score ─────────────────────────────────────────────────────────────
 
+
 class TestDriftScore:
     def test_zero_with_no_violations(self):
         score = _drift_score([], 10)
@@ -166,6 +177,7 @@ class TestDriftScore:
 
 
 # ── MCP Tool Functions ──────────────────────────────────────────────────────
+
 
 class TestScanIntents:
     def test_scans_project(self, tmp_project):
@@ -228,13 +240,16 @@ class TestDeclareIntent:
     def test_explicit_config(self):
         _intents.clear()
         result = declare_intent(
-            "No cross-domain", rule_type="import_boundary",
-            source_pattern="src/a", forbidden_target="src/b",
+            "No cross-domain",
+            rule_type="import_boundary",
+            source_pattern="src/a",
+            forbidden_target="src/b",
         )
         assert result["confirmed"] is True
 
 
 # ── Helper Functions ───────────────────────────────────────────────────────
+
 
 class TestExtractImport:
     def test_es_module_from(self):
@@ -289,6 +304,7 @@ class TestSourceFiles:
 
 # ── check_drift_for_changes ───────────────────────────────────────────────
 
+
 class TestCheckDriftForChanges:
     def test_detects_violations_in_changed_files(self, tmp_project):
         _intents.clear()
@@ -315,7 +331,8 @@ class TestCheckDriftForChanges:
         scan_intents(str(tmp_project))
         with patch("claude_drift_server.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=0, stdout="src/payment/session.ts\n",
+                returncode=0,
+                stdout="src/payment/session.ts\n",
             )
             result = check_drift_for_changes(str(tmp_project))
         assert result["new_violations"] == 0
@@ -323,12 +340,15 @@ class TestCheckDriftForChanges:
 
 # ── export_rules ──────────────────────────────────────────────────────────
 
+
 class TestExportRules:
     def test_exports_confirmed_rules(self, tmp_path):
         _intents.clear()
         declare_intent(
-            "No cross-domain", rule_type="import_boundary",
-            source_pattern="src/a", forbidden_target="src/b",
+            "No cross-domain",
+            rule_type="import_boundary",
+            source_pattern="src/a",
+            forbidden_target="src/b",
         )
         result = export_rules(str(tmp_path))
         assert result["exported"] == 1
@@ -345,8 +365,10 @@ class TestExportRules:
     def test_custom_output_path(self, tmp_path):
         _intents.clear()
         declare_intent(
-            "No X", rule_type="import_boundary",
-            source_pattern="a", forbidden_target="b",
+            "No X",
+            rule_type="import_boundary",
+            source_pattern="a",
+            forbidden_target="b",
         )
         export_rules(str(tmp_path), "custom-rules.json")
         assert (tmp_path / "custom-rules.json").exists()
@@ -354,12 +376,10 @@ class TestExportRules:
 
 # ── Edge Cases ────────────────────────────────────────────────────────────
 
+
 class TestDriftEdgeCases:
     def test_drift_score_capped_at_one(self):
-        violations = [
-            DriftViolation(file="a.ts", severity=Severity.CRITICAL, confidence=1.0)
-            for _ in range(100)
-        ]
+        violations = [DriftViolation(file="a.ts", severity=Severity.CRITICAL, confidence=1.0) for _ in range(100)]
         score = _drift_score(violations, 1)
         assert score["drift_score"] <= 1.0
 

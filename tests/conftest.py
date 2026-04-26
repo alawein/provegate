@@ -53,7 +53,7 @@ def tmp_project(tmp_path):
         '{"version":"1.0","rules":['
         '{"id":"r1","description":"Auth must not import payment",'
         '"rule_type":"import_boundary","config":{"source_pattern":"src/auth","forbidden_target":"payment"}}'
-        ']}'
+        "]}"
     )
 
     # Source files
@@ -62,28 +62,23 @@ def tmp_project(tmp_path):
     (auth_dir / "handler.ts").write_text(
         'import { PaymentSession } from "../payment/session";\n'
         'import { User } from "../models/user";\n'
-        'export function handleAuth() { return true; }\n'
+        "export function handleAuth() { return true; }\n"
     )
 
     pay_dir = tmp_path / "src" / "payment"
     pay_dir.mkdir(parents=True)
-    (pay_dir / "session.ts").write_text(
-        'export class PaymentSession { id: string = ""; }\n'
-    )
+    (pay_dir / "session.ts").write_text('export class PaymentSession { id: string = ""; }\n')
 
     api_dir = tmp_path / "src" / "api"
     api_dir.mkdir(parents=True)
     (api_dir / "controller.ts").write_text(
-        'import { PrismaClient } from "prisma";\n'
-        'console.log("debug");\n'
-        'export function getUsers() { return []; }\n'
+        'import { PrismaClient } from "prisma";\nconsole.log("debug");\nexport function getUsers() { return []; }\n'
     )
 
     repo_dir = tmp_path / "src" / "repo"
     repo_dir.mkdir(parents=True)
     (repo_dir / "user_repo.ts").write_text(
-        'import { PrismaClient } from "prisma";\n'
-        'export function findUser(id: string) { return null; }\n'
+        'import { PrismaClient } from "prisma";\nexport function findUser(id: string) { return null; }\n'
     )
 
     return tmp_path

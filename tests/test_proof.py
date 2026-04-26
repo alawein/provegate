@@ -4,9 +4,17 @@ import subprocess
 from unittest.mock import patch, MagicMock
 
 from claude_proof_server import (
-    begin_modification, checkpoint, verify_step, rollback,
-    finalize_proof, quick_verify, list_active_proofs, promote_claims,
-    _proofs, _cp_count, _git,
+    begin_modification,
+    checkpoint,
+    verify_step,
+    rollback,
+    finalize_proof,
+    quick_verify,
+    list_active_proofs,
+    promote_claims,
+    _proofs,
+    _cp_count,
+    _git,
 )
 import claude_memory_mesh_server as mms
 
@@ -29,9 +37,11 @@ class TestBeginModification:
     def test_creates_baseline_commit(self):
         _clear()
         calls = []
+
         def fake_git(args, cwd="."):
             calls.append(args)
             return True, "abc123"
+
         with patch("claude_proof_server._git", side_effect=fake_git):
             begin_modification("Test", "Plan")
         # Should call git add, git commit, git rev-parse
@@ -58,9 +68,11 @@ class TestCheckpoint:
     def test_creates_git_tag(self):
         _clear()
         calls = []
+
         def fake_git(args, cwd="."):
             calls.append(args)
             return True, "abc123"
+
         with patch("claude_proof_server._git", side_effect=fake_git):
             r = begin_modification("Test", "Plan")
             checkpoint(r["proof_id"], "Tagged step")
@@ -75,8 +87,11 @@ class TestVerifyStep:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="OK", stderr="")
             result = verify_step(
-                r["proof_id"], "Check tests pass", "test",
-                "All green", test_command="pytest",
+                r["proof_id"],
+                "Check tests pass",
+                "test",
+                "All green",
+                test_command="pytest",
             )
         assert result["passed"] is True
         assert result["pass_rate"] == 1.0
@@ -88,8 +103,11 @@ class TestVerifyStep:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="FAILED")
             result = verify_step(
-                r["proof_id"], "Check tests pass", "test",
-                "All green", test_command="pytest",
+                r["proof_id"],
+                "Check tests pass",
+                "test",
+                "All green",
+                test_command="pytest",
             )
         assert result["passed"] is False
         assert result["last_checkpoint"] is not None  # hint to rollback
@@ -99,8 +117,12 @@ class TestVerifyStep:
         with patch("claude_proof_server._git", return_value=(True, "abc")):
             r = begin_modification("Test", "Plan")
         result = verify_step(
-            r["proof_id"], "Manual code review", "review",
-            "Looks correct", manual_result="Approved", manual_passed=True,
+            r["proof_id"],
+            "Manual code review",
+            "review",
+            "Looks correct",
+            manual_result="Approved",
+            manual_passed=True,
         )
         assert result["passed"] is True
 
@@ -110,8 +132,11 @@ class TestVerifyStep:
             r = begin_modification("Test", "Plan")
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 120)):
             result = verify_step(
-                r["proof_id"], "Slow test", "test",
-                "Should finish", test_command="sleep 999",
+                r["proof_id"],
+                "Slow test",
+                "test",
+                "Should finish",
+                test_command="sleep 999",
             )
         assert result["passed"] is False
         assert "Timed out" in result["outcome"]
@@ -212,8 +237,7 @@ class TestFinalizeProof:
             r = begin_modification("Test", "Plan")
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="OK", stderr="")
-            verify_step(r["proof_id"], "Auth test", "test", "OK",
-                        test_command="pytest tests/auth")
+            verify_step(r["proof_id"], "Auth test", "test", "OK", test_command="pytest tests/auth")
         result = finalize_proof(r["proof_id"])
         claim = result["promotable_claims"][0]
         # Should be ready for store_claim()
@@ -265,10 +289,14 @@ class TestPromoteClaims:
     def test_promotes_to_memory_mesh(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
             claims = [
-                {"statement": "Verified: auth tests pass", "claim_type": "invariant",
-                 "confidence": 0.85, "evidence_kind": "test_result",
-                 "evidence_description": "pytest auth/ passed",
-                 "evidence_command": "pytest tests/auth"},
+                {
+                    "statement": "Verified: auth tests pass",
+                    "claim_type": "invariant",
+                    "confidence": 0.85,
+                    "evidence_kind": "test_result",
+                    "evidence_description": "pytest auth/ passed",
+                    "evidence_command": "pytest tests/auth",
+                },
             ]
             result = promote_claims(claims)
             assert result["promoted"] == 1
@@ -276,14 +304,14 @@ class TestPromoteClaims:
 
             # Verify claim is in memory mesh
             from claude_memory_mesh_server import query_claims
+
             found = query_claims(query="auth tests pass")
             assert found["count"] == 1
 
     def test_rejects_below_threshold(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
             claims = [
-                {"statement": "Low confidence guess", "claim_type": "invariant",
-                 "confidence": 0.3},
+                {"statement": "Low confidence guess", "claim_type": "invariant", "confidence": 0.3},
             ]
             result = promote_claims(claims)
             assert result["promoted"] == 0
@@ -297,8 +325,7 @@ class TestPromoteClaims:
                 r = begin_modification("Migrate auth", "Run tests at each step")
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0, stdout="OK", stderr="")
-                verify_step(r["proof_id"], "Auth tests pass", "test",
-                            "All green", test_command="pytest tests/auth")
+                verify_step(r["proof_id"], "Auth tests pass", "test", "All green", test_command="pytest tests/auth")
             result = finalize_proof(r["proof_id"])
             assert result["status"] == "verified"
 
@@ -308,12 +335,14 @@ class TestPromoteClaims:
 
             # Verify claim landed in memory
             from claude_memory_mesh_server import query_claims
+
             found = query_claims(query="Auth tests pass")
             assert found["count"] == 1
             assert found["claims"][0]["verification_level"] == "tested"
 
 
 # ── _git() helper ─────────────────────────────────────────────────────────
+
 
 class TestGitHelper:
     def test_failure_returns_false(self):
@@ -331,6 +360,7 @@ class TestGitHelper:
 
 # ── Edge Cases ─────────────────────────────────────────────────────────────
 
+
 class TestProofEdgeCases:
     def test_begin_modification_git_fails(self):
         _clear()
@@ -347,8 +377,11 @@ class TestProofEdgeCases:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="OK", stderr="")
             result = verify_step(
-                r["proof_id"], "Lint check", "static_analysis",
-                "No errors", test_command="ruff check .",
+                r["proof_id"],
+                "Lint check",
+                "static_analysis",
+                "No errors",
+                test_command="ruff check .",
             )
         assert result["passed"] is True
         # Evidence kind should be STATIC_ANALYSIS
@@ -379,11 +412,14 @@ class TestProofEdgeCases:
     def test_promote_multiple_mixed(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
             claims = [
-                {"statement": "Good claim", "claim_type": "invariant",
-                 "confidence": 0.85, "evidence_kind": "test_result",
-                 "evidence_description": "passed"},
-                {"statement": "Weak claim", "claim_type": "invariant",
-                 "confidence": 0.3},
+                {
+                    "statement": "Good claim",
+                    "claim_type": "invariant",
+                    "confidence": 0.85,
+                    "evidence_kind": "test_result",
+                    "evidence_description": "passed",
+                },
+                {"statement": "Weak claim", "claim_type": "invariant", "confidence": 0.3},
             ]
             result = promote_claims(claims)
             assert result["promoted"] == 1

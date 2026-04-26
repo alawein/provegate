@@ -1,9 +1,18 @@
 """Tests for shared/types.py — the domain model."""
 
 from shared.types import (
-    Claim, ClaimStatus, Evidence, EvidenceKind, ClaimEdge, EdgeRelation,
-    ArchitecturalIntent, IntentSource, DriftViolation, Severity,
-    ProofArtifact, VerificationStep,
+    Claim,
+    ClaimStatus,
+    Evidence,
+    EvidenceKind,
+    ClaimEdge,
+    EdgeRelation,
+    ArchitecturalIntent,
+    IntentSource,
+    DriftViolation,
+    Severity,
+    ProofArtifact,
+    VerificationStep,
 )
 
 
@@ -64,11 +73,13 @@ class TestProofArtifact:
         assert p.pass_rate() == 0.0
 
     def test_pass_rate_ignores_rollbacks(self):
-        p = ProofArtifact(steps=[
-            VerificationStep(1, "check", "test", "ok", "ok", True),
-            VerificationStep(2, "rollback", "rollback", "clean", "clean", True),
-            VerificationStep(3, "check2", "test", "ok", "ok", False),
-        ])
+        p = ProofArtifact(
+            steps=[
+                VerificationStep(1, "check", "test", "ok", "ok", True),
+                VerificationStep(2, "rollback", "rollback", "clean", "clean", True),
+                VerificationStep(3, "check2", "test", "ok", "ok", False),
+            ]
+        )
         # 2 testable steps (excluding rollback), 1 passed -> 50%
         assert p.pass_rate() == 0.5
 
@@ -91,6 +102,7 @@ class TestEvidence:
 class TestScope:
     def test_to_dict(self):
         from shared.types import Scope
+
         s = Scope(files=["a.ts", "b.ts"], services=["auth"])
         d = s.to_dict()
         assert d["files"] == ["a.ts", "b.ts"]
@@ -101,6 +113,7 @@ class TestScope:
 class TestProvenance:
     def test_to_dict(self):
         from shared.types import Provenance
+
         p = Provenance(agent_id="test-agent", model="claude-3")
         d = p.to_dict()
         assert d["agent_id"] == "test-agent"

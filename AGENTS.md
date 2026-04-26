@@ -3,62 +3,50 @@ type: canonical
 source: none
 sync: none
 sla: none
----
-
-<!-- Template: python-ml-server v1.0.0 -->
-<!-- Generated from workspace governance; project-specific sections are authoritative. -->
----
-type: normative
 authority: canonical
 audience: [agents, contributors, maintainers]
-last-verified: 2026-03-30
+last_updated: 2026-04-16
+last-verified: 2026-04-16
 ---
 
-# AGENTS — epistemic-stack
+# AGENTS — Provegate
 
-> **Status: Normative.** Do not modify this file without maintainer review.
+## Workspace identity
 
-This repository contains three related MCP servers and shared prompting research assets.
+`provegate` is the repo for `claude-drift`, `claude-memory-mesh`, and
+`claude-proof`, plus the shared types and CLI tooling that bind them together.
 
-## Repository Scope
+## Directory structure
 
-| Directory | Purpose | Governance level |
-|-----------|---------|------------------|
-| `claude-drift/` | Drift detection engine and rule generation | Primary |
-| `claude-memory-mesh/` | Persistent graph memory and indexing | Primary |
-| `claude-proof/` | Proof/verification workflows and checkpoints | Primary |
-| `shared/` | Shared tooling and cross-service contracts | Stable |
-| `examples/` | Example integrations and docs snippets | Secondary |
-| `tests/` | Unit and integration tests | Primary |
-| `scripts/` | CLI entrypoints and orchestration helpers | Stable |
+- `claude-drift/`: intent parsing and drift checks
+- `claude-memory-mesh/`: persistence and claim graph operations
+- `claude-proof/`: verification chains and rollback
+- `shared/`: canonical shared types
+- `scripts/`: repo scanners and helpers
+- `tests/`: regression and integration coverage
+- `docs/`: architecture, deployment, operations, and prompt notes
 
-## Invariants (Must Always Hold)
+## Governance rules
 
-1. Changes to core behavior must include or update tests in `tests/`.
-2. All scripts and MCP entrypoints must be executable and importable from repo root.
-3. No secrets or environment credentials checked into source.
-4. Keep dependency/runtime assumptions explicit in CLI entrypoints.
-5. Python versions must remain compatible with `>=3.10`.
-6. New protocol or schema changes must stay backward-compatible where practical.
+1. Changes to shared behavior must update tests.
+2. Keep all three MCP servers runnable from repo root.
+3. Do not hand-wave proof, memory, or drift semantics in docs or code.
+4. Keep persistence, decay, and claim-state transitions explicit.
+5. Do not introduce secrets or environment-specific credentials into source.
 
-## Agent Rules
+## Code conventions
 
-- Read `AGENTS.md` and `CLAUDE.md` before editing.
-- Do not modify `.venv/` or local cache directories unless requested.
-- Run `pytest` before proposing behavior-changing edits.
-- Run `python -m ruff check .` for touched Python paths.
-- Keep imports minimal and avoid broad `*` imports.
-- Keep public interfaces documented when behavior changes (README + any touched route docs).
-- Any change to prompt/decision logic must preserve deterministic defaults and include regression tests.
+- Python 3.10+
+- FastMCP for server entrypoints
+- Dataclasses and typed enums for the shared model
+- Comments explain composition, persistence, or verification constraints
+- Conventional commits only
 
-## Test Requirements
+## Build and test commands
 
-- Validation baseline: `pytest`
-- Optional type check: `mypy scripts` (as available)
-- Lint baseline: `ruff check .`
-
-## Repo-Specific Notes
-
-- `README.md` is the canonical onboarding entrypoint; update if CLI flags or package exports change.
-- This repository has no `.Codex/AGENTS.md`; this `AGENTS.md` is the authoritative source.
-- If adding new dependencies, update `pyproject.toml` and lock/pin constraints consistently.
+```bash
+uv pip install -e ".[dev]"
+python -m pytest
+ruff check .
+python scripts/scan_repo.py .
+```

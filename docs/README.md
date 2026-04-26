@@ -1,9 +1,7 @@
 ---
-type: derived
-owner: platform-engineering
-last-reviewed: 2026-03-31
-source: ../README.md
-sync: manual
+type: canonical
+source: none
+sync: none
 sla: none
 ---
 
