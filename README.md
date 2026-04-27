@@ -1,21 +1,12 @@
----
-type: canonical
-source: none
-sync: none
-sla: none
----
-
 # Provegate
 
-Three MCP servers that give AI coding agents **justified, revisable beliefs** about your codebase.
+Three MCP servers for AI coding agents: drift detection, evidence-backed memory, and verified change chains.
 
 ```
 claude-drift        detects divergence between intent and implementation
 claude-memory-mesh  persists what agents believe (with evidence and decay)
 claude-proof        verifies changes and gates what enters memory
 ```
-
-Without proof, memory is noisy. Without memory, proof is local and wasted. Without drift detection, neither stays aligned with reality.
 
 ## The Problem
 
