@@ -29,6 +29,8 @@ claude mcp add claude-memory-mesh -- python /path/to/claude-memory-mesh/server.p
 claude mcp add claude-proof -- python /path/to/claude-proof/server.py
 ```
 
+For development on the provegate source itself, install in editable mode instead: `pip install -e .` (see [Development](#development) below).
+
 ## How It Works
 
 ### Layer 1: claude-drift (Detection)

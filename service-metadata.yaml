@@ -4,7 +4,7 @@ name: provegate
 type: service
 runtime: python
 tier: tier-3
-deploy: none
+deploy: vercel
 owner: alawein
 team: alawein-core
 oncall: "@alawein"
