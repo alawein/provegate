@@ -1,4 +1,4 @@
-"""Shared fixtures for epistemic-stack tests."""
+"""Shared fixtures for provegate tests."""
 
 import importlib.util
 import sys

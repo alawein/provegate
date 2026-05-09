@@ -26,7 +26,7 @@ export GITHUB_REPOSITORY="alawein/provegate"   # optional; defaults to alawein/p
 node scripts/github-sync-report.mjs
 ```
 
-Artifact: `reports/sync-report.epistemic-stack.json` (gitignored). In **GitHub Actions**, run workflow **"Ops — GitHub sync report"** (workflow_dispatch); it uploads the JSON as a workflow artifact.
+Artifact: `reports/sync-report.provegate.json` (gitignored). In **GitHub Actions**, run workflow **"Ops — GitHub sync report"** (workflow_dispatch); it uploads the JSON as a workflow artifact.
 
 **CI parity:** `GITHUB_TOKEN` is injected automatically; `GITHUB_REPOSITORY` is set by Actions.
 
