@@ -1,5 +1,12 @@
 # Provegate
 
+Status:      active
+Category:    ventures
+Owner:       alawein
+Visibility:  public
+Purpose:     Agent MCP tooling for drift control, memory, and proof-oriented orchestration.
+Next action: continue
+
 Three MCP servers for AI coding agents: drift detection, evidence-backed memory, and verified change chains.
 
 ```
