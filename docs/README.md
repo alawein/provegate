@@ -1,10 +1,3 @@
----
-type: canonical
-source: none
-sync: none
-sla: none
----
-
 # Documentation Index — provegate
 
 Agent MCP tooling — drift, memory, proof
