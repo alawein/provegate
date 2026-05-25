@@ -7,7 +7,7 @@ sla: none
 
 # Changelog
 
-All notable changes to **fixpoint** will be documented in this file.
+All notable changes to **provegate** will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 

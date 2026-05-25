@@ -12,6 +12,15 @@ venv/
 # Ops reports (generated locally or in CI artifacts)
 reports/sync-report.*.json
 
+# === Secrets (never commit) ===
+.env
+.env.*
+*.pem
+*.key
+
+# === Local virtualenvs ===
+.venv_audit/
+
 # === Build artifacts & caches (workspace standard) ===
 __pycache__/
 *.py[cod]
