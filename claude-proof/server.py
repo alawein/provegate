@@ -156,6 +156,7 @@ def promote_claims(claims: list[dict], scope_files: Optional[list[str]] = None,
             from importlib.util import spec_from_file_location, module_from_spec
             mesh_path = Path(__file__).resolve().parent.parent / "claude-memory-mesh" / "server.py"
             spec = spec_from_file_location("claude_memory_mesh_server", str(mesh_path))
+            assert spec is not None and spec.loader is not None
             mesh = module_from_spec(spec)
             sys.modules["claude_memory_mesh_server"] = mesh
             spec.loader.exec_module(mesh)

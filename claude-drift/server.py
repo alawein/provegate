@@ -310,9 +310,9 @@ def check_drift(root: str = ".", scope: Optional[str] = None) -> dict:
     if not _intents: scan_intents(root)
     if not _intents:
         return {"error": "No intents found. Add constraints to CLAUDE.md or use declare_intent()."}
-    violations = []
+    violations: list[DriftViolation] = []
     for intent in _intents.values():
-        analyzer = ANALYZERS.get(intent.rule_type)
+        analyzer = ANALYZERS.get(intent.rule_type or "")
         if analyzer:
             found = analyzer(intent, root)
             if scope: found = [v for v in found if scope.lower() in v.file.lower()]
@@ -332,9 +332,9 @@ def check_drift_for_changes(root: str=".", base_commit: str="HEAD~1", head_commi
                              capture_output=True, text=True, cwd=root).stdout.strip().splitlines()
     if not changed: return {"message":"No files changed","violations":[],"new_violations":0}
     if not _intents: scan_intents(root)
-    violations = []
+    violations: list[DriftViolation] = []
     for intent in _intents.values():
-        analyzer = ANALYZERS.get(intent.rule_type)
+        analyzer = ANALYZERS.get(intent.rule_type or "")
         if analyzer: violations.extend(v for v in analyzer(intent, root) if v.file in changed)
     return {"base":base_commit,"head":head_commit,"files_changed":len(changed),
             "new_violations":len(violations),"violations":[v.to_dict() for v in violations]}
