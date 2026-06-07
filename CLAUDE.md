@@ -9,7 +9,7 @@ last_updated: 2026-04-16
 last-verified: 2026-04-16
 ---
 
-# CLAUDE.md — Provegate
+# CLAUDE.md: Provegate
 
 ## Workspace identity
 

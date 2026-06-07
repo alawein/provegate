@@ -1,6 +1,6 @@
-# Documentation Index — provegate
+# Documentation Index: provegate
 
-Agent MCP tooling — drift, memory, proof
+Agent MCP tooling: drift, memory, proof
 
 ## Start Here
 
