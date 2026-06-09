@@ -37,7 +37,15 @@ jobs:
         run: ruff check .
 
       - name: Typecheck
-        run: mypy claude-drift/server.py claude-memory-mesh/server.py claude-proof/server.py shared/
+        # The three server dirs are hyphenated (not valid package names), so each
+        # server.py maps to the same top-level module "server" in one invocation
+        # ("Duplicate module named server"). Check them separately so every file is
+        # fully type-checked without excluding any of them.
+        run: |
+          mypy claude-drift/server.py
+          mypy claude-memory-mesh/server.py
+          mypy claude-proof/server.py
+          mypy shared/
 
       - name: Test
         run: pytest --tb=short -q
