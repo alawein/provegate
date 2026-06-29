@@ -12,6 +12,7 @@ Agent MCP tooling: drift, memory, proof
 ## Core Docs
 
 - [Architecture Overview](./architecture.md)
+- [Repository topology](./architecture/topology.md)
 - [Deployment and Release](./deployment.md)
 - [Troubleshooting](./troubleshooting.md)
 
