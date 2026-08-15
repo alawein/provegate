@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from scan_repo import _load_drift, main  # noqa: E402
+from scan_repo import _load_drift, main
 
 
 class TestLoadDrift:

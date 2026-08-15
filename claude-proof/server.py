@@ -10,21 +10,25 @@ Verified claims flow into claude-memory-mesh.
 """
 
 from __future__ import annotations
-import json, subprocess, sys
+
+import json
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastmcp import FastMCP
-from shared.types import ProofArtifact, VerificationStep, Evidence, EvidenceKind, Provenance
+
+from shared.types import Evidence, EvidenceKind, ProofArtifact, Provenance, VerificationStep
+
 
 def _now(): return datetime.now(timezone.utc).isoformat()
 def _git(args, cwd="."):
     try:
-        r = subprocess.run(["git"]+args, capture_output=True, text=True, cwd=cwd, timeout=30)
+        r = subprocess.run(["git"]+args, capture_output=True, text=True, cwd=cwd, timeout=30, check=False)
         return r.returncode==0, r.stdout.strip()
-    except Exception as e:
+    except (OSError, subprocess.SubprocessError) as e:
         return False, str(e)
 
 _proofs: dict[str, ProofArtifact] = {}
@@ -64,8 +68,8 @@ def checkpoint(proof_id: str, description: str, root: str = ".") -> dict:
 
 @mcp.tool()
 def verify_step(proof_id: str, description: str, method: str, expected: str,
-                test_command: Optional[str]=None, manual_result: Optional[str]=None,
-                manual_passed: Optional[bool]=None, root: str=".") -> dict:
+                test_command: str | None=None, manual_result: str | None=None,
+                manual_passed: bool | None=None, root: str=".") -> dict:
     """Run a verification and record the result. Provide test_command (auto) or manual_result+manual_passed."""
     proof = _proofs.get(proof_id)
     if not proof: return {"error":"No active proof chain."}
@@ -73,7 +77,7 @@ def verify_step(proof_id: str, description: str, method: str, expected: str,
                             method=method, expected_outcome=expected)
     if test_command:
         try:
-            r = subprocess.run(test_command, shell=True, capture_output=True, text=True, cwd=root, timeout=120)
+            r = subprocess.run(test_command, shell=True, capture_output=True, text=True, cwd=root, timeout=120, check=False)
             step.passed = r.returncode==0
             step.actual_outcome = (r.stdout+"\n"+r.stderr).strip()[:2000]
         except subprocess.TimeoutExpired:
@@ -92,7 +96,7 @@ def verify_step(proof_id: str, description: str, method: str, expected: str,
 
 
 @mcp.tool()
-def rollback(proof_id: str, to_checkpoint: Optional[int]=None, root: str=".") -> dict:
+def rollback(proof_id: str, to_checkpoint: int | None=None, root: str=".") -> dict:
     """Revert to a checkpoint. Default: most recent."""
     proof = _proofs.get(proof_id)
     if not proof or not proof.checkpoints: return {"error":"No checkpoints."}
@@ -106,7 +110,7 @@ def rollback(proof_id: str, to_checkpoint: Optional[int]=None, root: str=".") ->
 
 
 @mcp.tool()
-def finalize_proof(proof_id: str, root: str=".", output_file: Optional[str]=None) -> dict:
+def finalize_proof(proof_id: str, root: str=".", output_file: str | None=None) -> dict:
     """Finalize proof chain. Produces artifact + claims ready for memory mesh promotion."""
     proof = _proofs.get(proof_id)
     if not proof: return {"error":"No active proof chain."}
@@ -135,7 +139,7 @@ def finalize_proof(proof_id: str, root: str=".", output_file: Optional[str]=None
 def quick_verify(description: str, test_command: str, root: str=".") -> dict:
     """One-off verification without a full proof chain. Returns evidence for store_claim()."""
     try:
-        r = subprocess.run(test_command, shell=True, capture_output=True, text=True, cwd=root, timeout=120)
+        r = subprocess.run(test_command, shell=True, capture_output=True, text=True, cwd=root, timeout=120, check=False)
         passed = r.returncode==0; output = (r.stdout+"\n"+r.stderr).strip()[:2000]
     except: passed, output = False, "Error running command"
     return {"passed":passed,"description":description,"command":test_command,"output":output[:500],
@@ -143,8 +147,8 @@ def quick_verify(description: str, test_command: str, root: str=".") -> dict:
 
 
 @mcp.tool()
-def promote_claims(claims: list[dict], scope_files: Optional[list[str]] = None,
-                   project_root: Optional[str] = None) -> dict:
+def promote_claims(claims: list[dict], scope_files: list[str] | None = None,
+                   project_root: str | None = None) -> dict:
     """Promote verified claims into memory mesh. Accepts the promotable_claims list from finalize_proof().
 
     Bridges claude-proof -> claude-memory-mesh: each claim is stored with its evidence.
@@ -153,14 +157,16 @@ def promote_claims(claims: list[dict], scope_files: Optional[list[str]] = None,
     mesh = sys.modules.get("claude_memory_mesh_server")
     if not mesh:
         try:
-            from importlib.util import spec_from_file_location, module_from_spec
+            from importlib.util import module_from_spec, spec_from_file_location
             mesh_path = Path(__file__).resolve().parent.parent / "claude-memory-mesh" / "server.py"
             spec = spec_from_file_location("claude_memory_mesh_server", str(mesh_path))
             assert spec is not None and spec.loader is not None
             mesh = module_from_spec(spec)
             sys.modules["claude_memory_mesh_server"] = mesh
             spec.loader.exec_module(mesh)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- exec_module runs arbitrary sibling-module
+            # code; any exception type is possible here, and this MCP tool must return a
+            # clean error dict rather than crash the tool call.
             return {"error": f"Cannot load claude-memory-mesh: {e}",
                     "hint": "Ensure claude-memory-mesh/server.py exists alongside claude-proof/"}
 

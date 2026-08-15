@@ -8,11 +8,17 @@ Usage:
 """
 
 from __future__ import annotations
-import argparse, json, subprocess, sys, tempfile, shutil
+
+import argparse
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from importlib.util import spec_from_file_location, module_from_spec
+from importlib.util import module_from_spec, spec_from_file_location
 
 
 def _load_drift():
@@ -37,7 +43,7 @@ def main():
         tmpdir = tempfile.mkdtemp(prefix="drift-scan-")
         cleanup = True
         print(f"Cloning {args.target}...")
-        r = subprocess.run(["git", "clone", "--depth=1", args.target, tmpdir], capture_output=True, text=True)
+        r = subprocess.run(["git", "clone", "--depth=1", args.target, tmpdir], capture_output=True, text=True, check=False)
         if r.returncode != 0:
             print(f"Clone failed: {r.stderr}", file=sys.stderr)
             sys.exit(1)

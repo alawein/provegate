@@ -1,22 +1,22 @@
 """Tests for claude-proof server — verification chains, checkpoints, rollback."""
 
 import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import claude_memory_mesh_server as mms
 from claude_proof_server import (
-    begin_modification,
-    checkpoint,
-    verify_step,
-    rollback,
-    finalize_proof,
-    quick_verify,
-    list_active_proofs,
-    promote_claims,
-    _proofs,
     _cp_count,
     _git,
+    _proofs,
+    begin_modification,
+    checkpoint,
+    finalize_proof,
+    list_active_proofs,
+    promote_claims,
+    quick_verify,
+    rollback,
+    verify_step,
 )
-import claude_memory_mesh_server as mms
 
 
 def _clear():
@@ -348,7 +348,7 @@ class TestGitHelper:
     def test_failure_returns_false(self):
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=128, stdout="fatal: error")
-            ok, out = _git(["status"])
+            ok, _out = _git(["status"])
         assert ok is False
 
     def test_timeout_returns_false(self):

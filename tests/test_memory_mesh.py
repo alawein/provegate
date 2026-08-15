@@ -3,19 +3,18 @@
 from unittest.mock import patch
 
 import claude_memory_mesh_server as mms
-
 from claude_memory_mesh_server import (
-    store_claim,
-    before_modifying,
-    record_decision,
-    record_failure,
-    query_claims,
-    invalidate_for_file,
-    add_relationship,
-    run_decay,
-    memory_stats,
     _db,
     _meets_threshold,
+    add_relationship,
+    before_modifying,
+    invalidate_for_file,
+    memory_stats,
+    query_claims,
+    record_decision,
+    record_failure,
+    run_decay,
+    store_claim,
 )
 
 
@@ -269,7 +268,7 @@ class TestAddRelationship:
 class TestRunDecay:
     def test_expires_old_observations(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
             from uuid import uuid4
 
             old_ts = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
@@ -335,7 +334,7 @@ class TestStoreClaimEdgeCases:
 class TestRunDecayEdgeCases:
     def test_decisions_never_expire(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
             from uuid import uuid4
 
             old_ts = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat()
@@ -352,7 +351,7 @@ class TestRunDecayEdgeCases:
 
     def test_failures_expire_at_60_days(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
             from uuid import uuid4
 
             old_ts = (datetime.now(timezone.utc) - timedelta(days=61)).isoformat()
@@ -369,7 +368,7 @@ class TestRunDecayEdgeCases:
 
     def test_invariants_expire_at_90_days(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
             from uuid import uuid4
 
             old_ts = (datetime.now(timezone.utc) - timedelta(days=91)).isoformat()
@@ -386,7 +385,7 @@ class TestRunDecayEdgeCases:
 
     def test_decay_project_root_filter(self, memory_db):
         with patch.object(mms, "DB_PATH", memory_db):
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
             from uuid import uuid4
 
             old_ts = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
