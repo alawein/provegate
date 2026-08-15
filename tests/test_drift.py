@@ -1,30 +1,30 @@
 """Tests for claude-drift server — intent parsing and drift detection."""
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from claude_drift_server import (
-    _extract_intents_md,
-    _extract_intents_json,
-    _derive_rule,
     _check_import_boundary,
-    _check_prohibition,
     _check_layer_enforcement,
-    _find_intent_files,
+    _check_prohibition,
+    _derive_rule,
     _drift_score,
-    _intents,
     _extract_import,
+    _extract_intents_json,
+    _extract_intents_md,
+    _find_intent_files,
+    _intents,
     _rel_posix,
     _source_files,
-    scan_intents,
     check_drift,
     check_drift_for_changes,
-    will_this_drift,
     declare_intent,
     export_rules,
+    scan_intents,
+    will_this_drift,
 )
-from shared.types import ArchitecturalIntent, DriftViolation, Severity
 
+from shared.types import ArchitecturalIntent, DriftViolation, Severity
 
 # ── Intent Parsing ──────────────────────────────────────────────────────────
 

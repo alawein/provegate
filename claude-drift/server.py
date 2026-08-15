@@ -10,13 +10,20 @@ Scores your architectural health.
 """
 
 from __future__ import annotations
-import json, re, subprocess, sys
+
+import json
+import logging
+import re
+import subprocess
+import sys
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastmcp import FastMCP
+
 from shared.types import ArchitecturalIntent, DriftViolation, IntentSource, Severity
+
+logger = logging.getLogger(__name__)
 
 mcp = FastMCP("claude-drift",
     instructions="Detects architectural drift — divergence between stated intent and actual code.")
@@ -70,9 +77,12 @@ def _extract_intents_md(filepath: Path) -> list[ArchitecturalIntent]:
         section = text[end:end + next_h.start() if next_h else len(text)]
         for line in section.splitlines():
             s = line.strip().lstrip("- ").strip()
-            if any(kw in s.lower() for kw in ["should","must","never","always","don't","forbidden","avoid","not import","not depend","go through"]) and len(s) > 15:
-                if not any(i.description == s for i in intents):
-                    intents.append(ArchitecturalIntent(description=s, source=src, source_file=str(filepath)))
+            if (
+                any(kw in s.lower() for kw in ["should","must","never","always","don't","forbidden","avoid","not import","not depend","go through"])
+                and len(s) > 15
+                and not any(i.description == s for i in intents)
+            ):
+                intents.append(ArchitecturalIntent(description=s, source=src, source_file=str(filepath)))
     return intents
 
 
@@ -129,7 +139,7 @@ _IMPORT_PATTERNS = [
 ]
 
 
-def _extract_import(line: str) -> Optional[str]:
+def _extract_import(line: str) -> str | None:
     """Return the imported module path from a source line, or None."""
     for pat in _IMPORT_PATTERNS:
         m = pat.search(line)
@@ -148,7 +158,9 @@ def _check_import_boundary(intent: ArchitecturalIntent, root: str) -> list[Drift
         rel = _rel_posix(fp, root_path)
         if src_pat.replace("*","") not in rel.lower(): continue
         try: content = fp.read_text(encoding="utf-8", errors="replace")
-        except Exception: continue
+        except OSError as e:
+            logger.debug("Skipping unreadable file %s: %s", fp, e)
+            continue
         for n, line in enumerate(content.splitlines(), 1):
             imported = _extract_import(line)
             if imported and forbidden in imported.lower():
@@ -179,7 +191,9 @@ def _check_prohibition(intent: ArchitecturalIntent, root: str) -> list[DriftViol
         rel = _rel_posix(fp, root_path)
         if scope not in rel.lower(): continue
         try: content = fp.read_text(encoding="utf-8", errors="replace")
-        except: continue
+        except OSError as e:
+            logger.debug("Skipping unreadable file %s: %s", fp, e)
+            continue
         for n, line in enumerate(content.splitlines(), 1):
             if any(re.search(p, line, re.IGNORECASE) for p in patterns):
                 violations.append(DriftViolation(
@@ -225,7 +239,8 @@ def _check_layer_enforcement(intent: ArchitecturalIntent, root: str) -> list[Dri
             continue
         try:
             content = fp.read_text(encoding="utf-8", errors="replace")
-        except Exception:
+        except OSError as e:
+            logger.debug("Skipping unreadable file %s: %s", fp, e)
             continue
         for n, line in enumerate(content.splitlines(), 1):
             # Check for direct imports of backing-layer modules
@@ -270,9 +285,8 @@ def _drift_score(violations: list[DriftViolation], file_count: int) -> dict:
 # ── MCP Tools ───────────────────────────────────────────────────────────────
 
 @mcp.tool()
-def scan_intents(root: str = ".", intent_file: Optional[str] = None) -> dict:
+def scan_intents(root: str = ".", intent_file: str | None = None) -> dict:
     """Discover and parse architectural intents from CLAUDE.md, ADRs, .drift-rules.json."""
-    global _intents
     root = str(Path(root).resolve())
     files = [Path(intent_file).resolve()] if intent_file else _find_intent_files(root)
     all_intents = []
@@ -289,8 +303,8 @@ def scan_intents(root: str = ".", intent_file: Optional[str] = None) -> dict:
 
 
 @mcp.tool()
-def declare_intent(description: str, rule_type: Optional[str]=None,
-                   source_pattern: Optional[str]=None, forbidden_target: Optional[str]=None) -> dict:
+def declare_intent(description: str, rule_type: str | None=None,
+                   source_pattern: str | None=None, forbidden_target: str | None=None) -> dict:
     """Declare an architectural intent. NL is auto-parsed; or specify rule_type + config directly."""
     intent = ArchitecturalIntent(description=description, source=IntentSource.HUMAN_DECLARATION)
     if rule_type and source_pattern and forbidden_target:
@@ -304,7 +318,7 @@ def declare_intent(description: str, rule_type: Optional[str]=None,
 
 
 @mcp.tool()
-def check_drift(root: str = ".", scope: Optional[str] = None) -> dict:
+def check_drift(root: str = ".", scope: str | None = None) -> dict:
     """Run drift detection against all registered intents. Returns violations + drift score."""
     root = str(Path(root).resolve())
     if not _intents: scan_intents(root)
@@ -318,7 +332,7 @@ def check_drift(root: str = ".", scope: Optional[str] = None) -> dict:
             if scope: found = [v for v in found if scope.lower() in v.file.lower()]
             violations.extend(found)
     score = _drift_score(violations, len(_source_files(root)))
-    git_head = subprocess.run(["git","rev-parse","HEAD"], capture_output=True, text=True, cwd=root).stdout.strip()
+    git_head = subprocess.run(["git","rev-parse","HEAD"], capture_output=True, text=True, cwd=root, check=False).stdout.strip()
     return {**score, "git_head": git_head,
             "violations": [v.to_dict() for v in sorted(violations, key=lambda v: -v.confidence)],
             "intents_checked": len(_intents)}
@@ -329,7 +343,7 @@ def check_drift_for_changes(root: str=".", base_commit: str="HEAD~1", head_commi
     """Check drift introduced between two commits (e.g. a PR). Only analyzes changed files."""
     root = str(Path(root).resolve())
     changed = subprocess.run(["git","diff","--name-only",base_commit,head_commit],
-                             capture_output=True, text=True, cwd=root).stdout.strip().splitlines()
+                             capture_output=True, text=True, cwd=root, check=False).stdout.strip().splitlines()
     if not changed: return {"message":"No files changed","violations":[],"new_violations":0}
     if not _intents: scan_intents(root)
     violations: list[DriftViolation] = []
@@ -351,10 +365,9 @@ def will_this_drift(file_path: str, proposed_change: str, root: str=".") -> dict
             if cfg.get("source_pattern","").lower() in file_path.lower() and cfg.get("forbidden_target","").lower() in proposed_change.lower():
                 warnings.append({"intent":intent.description,"risk":"high",
                     "reason":f"Change may introduce dependency on {cfg['forbidden_target']}"})
-        elif intent.rule_type == "prohibition":
-            if cfg.get("scope","").lower() in file_path.lower() and cfg.get("forbidden_action","").lower() in proposed_change.lower():
-                warnings.append({"intent":intent.description,"risk":"medium",
-                    "reason":f"Change includes prohibited: {cfg['forbidden_action']}"})
+        elif intent.rule_type == "prohibition" and cfg.get("scope","").lower() in file_path.lower() and cfg.get("forbidden_action","").lower() in proposed_change.lower():
+            warnings.append({"intent":intent.description,"risk":"medium",
+                "reason":f"Change includes prohibited: {cfg['forbidden_action']}"})
     return {"file":file_path,"warnings":warnings,"safe": len(warnings)==0}
 
 

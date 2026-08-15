@@ -1,27 +1,27 @@
 """End-to-end integration tests across all three servers."""
 
-from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, MagicMock
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import claude_memory_mesh_server as mms
-from claude_drift_server import scan_intents, check_drift, will_this_drift, _intents
+from claude_drift_server import _intents, check_drift, scan_intents, will_this_drift
 from claude_memory_mesh_server import (
-    store_claim,
-    record_decision,
-    invalidate_for_file,
-    add_relationship,
-    run_decay,
-    query_claims,
     _db,
+    add_relationship,
+    invalidate_for_file,
+    query_claims,
+    record_decision,
+    run_decay,
+    store_claim,
 )
 from claude_proof_server import (
+    _cp_count,
+    _proofs,
     begin_modification,
-    verify_step,
     finalize_proof,
     promote_claims,
-    _proofs,
-    _cp_count,
+    verify_step,
 )
 
 

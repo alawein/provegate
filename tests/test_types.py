@@ -1,17 +1,17 @@
 """Tests for shared/types.py — the domain model."""
 
 from shared.types import (
+    ArchitecturalIntent,
     Claim,
+    ClaimEdge,
     ClaimStatus,
+    DriftViolation,
+    EdgeRelation,
     Evidence,
     EvidenceKind,
-    ClaimEdge,
-    EdgeRelation,
-    ArchitecturalIntent,
     IntentSource,
-    DriftViolation,
-    Severity,
     ProofArtifact,
+    Severity,
     VerificationStep,
 )
 

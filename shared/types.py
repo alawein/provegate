@@ -5,10 +5,10 @@ A Claim is NOT a fact — it's a justified, revisable belief about the codebase.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
+
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
 from uuid import uuid4
 
 
@@ -65,7 +65,7 @@ class Evidence:
     kind: EvidenceKind
     description: str
     data: dict = field(default_factory=dict)
-    reproducible_command: Optional[str] = None
+    reproducible_command: str | None = None
     created_at: str = field(default_factory=_now)
 
     def to_dict(self) -> dict:
@@ -88,10 +88,10 @@ class Scope:
 @dataclass
 class Provenance:
     agent_id: str = "human"
-    model: Optional[str] = None
-    context_tokens: Optional[int] = None
-    commit_at_creation: Optional[str] = None
-    session_id: Optional[str] = None
+    model: str | None = None
+    context_tokens: int | None = None
+    commit_at_creation: str | None = None
+    session_id: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -108,8 +108,8 @@ class Claim:
     scope: Scope = field(default_factory=Scope)
     provenance: Provenance = field(default_factory=Provenance)
     observed_at: str = field(default_factory=_now)
-    valid_from: Optional[str] = None
-    valid_until: Optional[str] = None
+    valid_from: str | None = None
+    valid_until: str | None = None
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -160,8 +160,8 @@ class ArchitecturalIntent:
     id: str = field(default_factory=lambda: str(uuid4()))
     description: str = ""
     source: IntentSource = IntentSource.HUMAN_DECLARATION
-    source_file: Optional[str] = None
-    rule_type: Optional[str] = None  # import_boundary | layer_enforcement | prohibition
+    source_file: str | None = None
+    rule_type: str | None = None  # import_boundary | layer_enforcement | prohibition
     rule_config: dict = field(default_factory=dict)
     confirmed: bool = False
     created_at: str = field(default_factory=_now)
@@ -178,11 +178,11 @@ class DriftViolation:
     intent_id: str = ""
     intent_description: str = ""
     file: str = ""
-    line: Optional[int] = None
+    line: int | None = None
     evidence_text: str = ""
     confidence: float = 0.5
     severity: Severity = Severity.MEDIUM
-    suggested_fix: Optional[str] = None
+    suggested_fix: str | None = None
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -196,9 +196,9 @@ class VerificationStep:
     description: str
     method: str
     expected_outcome: str
-    actual_outcome: Optional[str] = None
-    passed: Optional[bool] = None
-    evidence: Optional[Evidence] = None
+    actual_outcome: str | None = None
+    passed: bool | None = None
+    evidence: Evidence | None = None
     timestamp: str = field(default_factory=_now)
 
     def to_dict(self) -> dict:

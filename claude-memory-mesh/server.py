@@ -9,20 +9,24 @@ Not a chat log — a graph of justified, revisable beliefs.
 """
 
 from __future__ import annotations
-import json, os, sqlite3, sys
+
+import json
+import os
+import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastmcp import FastMCP
-from shared.types import EvidenceKind, EdgeRelation
+
+from shared.types import EdgeRelation, EvidenceKind
 
 DB_PATH = os.environ.get("MEMORY_MESH_DB", str(Path.home() / ".claude" / "memory-mesh.db"))
 
 def _now(): return datetime.now(timezone.utc).isoformat()
 
-def _db(path: Optional[str] = None) -> sqlite3.Connection:
+def _db(path: str | None = None) -> sqlite3.Connection:
     path = path or DB_PATH
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
@@ -73,9 +77,9 @@ mcp = FastMCP("claude-memory-mesh",
 
 @mcp.tool()
 def store_claim(statement: str, claim_type: str = "invariant", confidence: float = 0.7,
-                evidence_kind: Optional[str] = None, evidence_description: Optional[str] = None,
-                evidence_command: Optional[str] = None, scope_files: Optional[list[str]] = None,
-                tags: Optional[list[str]] = None, project_root: Optional[str] = None,
+                evidence_kind: str | None = None, evidence_description: str | None = None,
+                evidence_command: str | None = None, scope_files: list[str] | None = None,
+                tags: list[str] | None = None, project_root: str | None = None,
                 agent_id: str = "claude-code", force: bool = False) -> dict:
     """Store a claim. Must meet verification threshold unless force=True (stored as 'proposed')."""
     ev_list = []
@@ -111,7 +115,7 @@ def store_claim(statement: str, claim_type: str = "invariant", confidence: float
 
 
 @mcp.tool()
-def before_modifying(file_path: str, project_root: Optional[str] = None) -> dict:
+def before_modifying(file_path: str, project_root: str | None = None) -> dict:
     """Get all relevant claims BEFORE modifying a file. Constraints, past failures, decisions."""
     conn = _db()
     rows = conn.execute("""SELECT * FROM claims WHERE status IN ('verified','proposed','contested')
@@ -134,9 +138,9 @@ def before_modifying(file_path: str, project_root: Optional[str] = None) -> dict
 
 
 @mcp.tool()
-def record_decision(choice: str, reasoning: str, alternatives_rejected: Optional[list[str]] = None,
-                    scope_files: Optional[list[str]] = None, tags: Optional[list[str]] = None,
-                    project_root: Optional[str] = None) -> dict:
+def record_decision(choice: str, reasoning: str, alternatives_rejected: list[str] | None = None,
+                    scope_files: list[str] | None = None, tags: list[str] | None = None,
+                    project_root: str | None = None) -> dict:
     """Record an architectural decision with reasoning. Doesn't decay by time."""
     return store_claim(f"DECISION: {choice}", "decision", 0.9, "human_assertion",
                        f"Reasoning: {reasoning}. Rejected: {', '.join(alternatives_rejected or ['none'])}",
@@ -144,8 +148,8 @@ def record_decision(choice: str, reasoning: str, alternatives_rejected: Optional
 
 
 @mcp.tool()
-def record_failure(what_failed: str, why: str, scope_files: Optional[list[str]] = None,
-                   tags: Optional[list[str]] = None, project_root: Optional[str] = None) -> dict:
+def record_failure(what_failed: str, why: str, scope_files: list[str] | None = None,
+                   tags: list[str] | None = None, project_root: str | None = None) -> dict:
     """Record a failed approach so future sessions don't repeat it."""
     return store_claim(f"FAILED: {what_failed}. Reason: {why}", "failure", 0.85,
                        "llm_reasoning", f"Tried: {what_failed}. Failed: {why}",
@@ -153,8 +157,8 @@ def record_failure(what_failed: str, why: str, scope_files: Optional[list[str]] 
 
 
 @mcp.tool()
-def query_claims(query: Optional[str]=None, claim_type: Optional[str]=None,
-                 scope_file: Optional[str]=None, project_root: Optional[str]=None, limit: int=20) -> dict:
+def query_claims(query: str | None=None, claim_type: str | None=None,
+                 scope_file: str | None=None, project_root: str | None=None, limit: int=20) -> dict:
     """Search the memory graph. Filter by text, type, file, project."""
     conn = _db()
     conds, params = ["status NOT IN ('expired','rejected')"], []
@@ -174,7 +178,7 @@ def query_claims(query: Optional[str]=None, claim_type: Optional[str]=None,
 
 
 @mcp.tool()
-def invalidate_for_file(file_path: str, project_root: Optional[str] = None) -> dict:
+def invalidate_for_file(file_path: str, project_root: str | None = None) -> dict:
     """Expire claims tied to a changed file. Decisions are preserved."""
     conn = _db()
     invalidatable = {k for k, (_, inv) in DECAY.items() if inv}
@@ -208,7 +212,7 @@ def add_relationship(source_id: str, target_id: str, relation: str) -> dict:
 
 
 @mcp.tool()
-def run_decay(project_root: Optional[str] = None) -> dict:
+def run_decay(project_root: str | None = None) -> dict:
     """Expire stale claims based on age and confidence rules."""
     conn = _db()
     now = datetime.now(timezone.utc)
@@ -229,7 +233,7 @@ def run_decay(project_root: Optional[str] = None) -> dict:
 
 
 @mcp.tool()
-def memory_stats(project_root: Optional[str] = None) -> dict:
+def memory_stats(project_root: str | None = None) -> dict:
     """Get counts by status, type, and recent activity."""
     conn = _db()
     by_status = {r["status"]:r["count"] for r in conn.execute("SELECT status, COUNT(*) as count FROM claims GROUP BY status").fetchall()}
